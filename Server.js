@@ -432,7 +432,66 @@ app.put('/api/admin/users/:id/role', verifyToken, (req, res) => {
   });
 });
 
-// 18gi. Menjalankan server
+// 18. API UNTUK ADMIN - GET PROFIL DIRI SENDIRI
+app.get('/api/admin/profile', verifyToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const userId = req.user.userId;
+  // Ambil data admin saat ini (kecuali password)
+  const query = 'SELECT id, nama_lengkap, email, no_telepon FROM users WHERE id = ?';
+
+  connection.query(query, [userId], (error, results) => {
+    if (error) return res.status(500).json({ message: 'Kesalahan server.' });
+    if (results.length === 0) return res.status(404).json({ message: 'Admin tidak ditemukan.' });
+    res.status(200).json(results[0]);
+  });
+});
+
+// 19. API UNTUK ADMIN - UPDATE PROFIL DIRI SENDIRI
+app.put('/api/admin/profile', verifyToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const userId = req.user.userId;
+  const { nama_lengkap, email, no_telepon, password_baru } = req.body;
+
+  if (!nama_lengkap || !email) {
+    return res.status(400).json({ message: 'Nama dan Email wajib diisi.' });
+  }
+
+  let query, values;
+
+  try {
+    if (password_baru) {
+      // Jika admin ingin ganti password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password_baru, salt);
+      
+      query = 'UPDATE users SET nama_lengkap = ?, email = ?, no_telepon = ?, password = ? WHERE id = ?';
+      values = [nama_lengkap, email, no_telepon || null, hashedPassword, userId];
+    } else {
+      // Jika tidak ganti password
+      query = 'UPDATE users SET nama_lengkap = ?, email = ?, no_telepon = ? WHERE id = ?';
+      values = [nama_lengkap, email, no_telepon || null, userId];
+    }
+
+    connection.query(query, values, (error, results) => {
+      if (error) {
+        if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ message: 'Email sudah digunakan akun lain.' });
+        return res.status(500).json({ message: 'Gagal mengupdate profil.' });
+      }
+      res.status(200).json({ message: 'Profil berhasil diupdate!' });
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: 'Server error saat hashing password.' });
+  }
+});
+
+// 20. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
