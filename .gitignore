@@ -6,3 +6,6 @@ uploads/
 
 # Abaikan file environment (jika nanti ada)
 .env
+
+# Abaikan file environment (JANGAN DI-UPLOAD!)
+.env

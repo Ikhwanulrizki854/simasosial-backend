@@ -9,6 +9,9 @@ const multer = require('multer');
 const path = require('path'); 
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const midtransClient = require('midtrans-client');
+
+require('dotenv').config();
 
 // 2. Inisialisasi aplikasi express
 const app = express();
@@ -18,7 +21,15 @@ const port = 8000;
 // Ini agar frontend bisa mengakses gambar: http://localhost:8000/uploads/nama-gambar.jpg
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 3. KONFIGURASI MULTER (Penyimpanan File)
+// 4. Inisialisasi Midtrans Snap
+// Ambil key dari "brankas" (.env)
+const snap = new midtransClient.Snap({
+  isProduction: false, // Set 'true' nanti saat sudah live
+  serverKey: process.env.MIDTRANS_SERVER_KEY,
+  clientKey: process.env.MIDTRANS_CLIENT_KEY
+});
+
+// 5. KONFIGURASI MULTER (Penyimpanan File)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/'); // Simpan di folder 'uploads/'
