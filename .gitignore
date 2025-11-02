@@ -1,0 +1,8 @@
+# Abaikan folder dependensi
+node_modules/
+
+# Abaikan gambar yang di-upload pengguna
+uploads/
+
+# Abaikan file environment (jika nanti ada)
+.env
