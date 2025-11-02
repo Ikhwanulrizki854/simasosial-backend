@@ -541,7 +541,64 @@ app.post('/api/admin/activities/:id/generate-certificates', verifyToken, async (
   });
 });
 
-// 21. Menjalankan server
+// 21. API UNTUK ADMIN - AMBIL DAFTAR PESERTA KEGIATAN
+app.get('/api/admin/activities/:id/participants', verifyToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const { id: activityId } = req.params;
+
+  // Query JOIN untuk ambil data pendaftar + data user-nya
+  const query = `
+    SELECT 
+      reg.id AS registration_id, 
+      reg.status_kehadiran,
+      usr.nama_lengkap,
+      usr.nim,
+      usr.email
+    FROM activity_registrations AS reg
+    JOIN users AS usr ON reg.user_id = usr.id
+    WHERE reg.activity_id = ?
+  `;
+
+  connection.query(query, [activityId], (err, results) => {
+    if (err) {
+      console.error('Error fetching participants:', err);
+      return res.status(500).json({ message: 'Error database.' });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// 22. API UNTUK ADMIN - UPDATE STATUS KEHADIRAN PESERTA
+app.put('/api/admin/participants/:registration_id/status', verifyToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const { registration_id } = req.params;
+  const { newStatus } = req.body; // Misal: 'hadir' atau 'absen'
+
+  if (!newStatus) {
+    return res.status(400).json({ message: 'Status baru wajib diisi.' });
+  }
+
+  const query = 'UPDATE activity_registrations SET status_kehadiran = ? WHERE id = ?';
+  
+  connection.query(query, [newStatus, registration_id], (err, results) => {
+    if (err) {
+      console.error('Error updating status:', err);
+      return res.status(500).json({ message: 'Error database.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Data pendaftaran tidak ditemukan.' });
+    }
+    res.status(200).json({ message: 'Status kehadiran berhasil diupdate!' });
+  });
+});
+
+// 23. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
