@@ -400,7 +400,39 @@ app.get('/api/admin/users', verifyToken, (req, res) => {
   });
 });
 
-// 17. Menjalankan server
+// 17. BUAT API ENDPOINT UNTUK ADMIN - UPDATE ROLE PENGGUNA (AMAN)
+app.put('/api/admin/users/:id/role', verifyToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const { id } = req.params;
+  const { newRole } = req.body; // Data role baru dikirim dari frontend
+
+  if (!newRole || (newRole !== 'admin' && newRole !== 'mahasiswa')) {
+    return res.status(400).json({ message: 'Role tidak valid.' });
+  }
+
+  // Admin tidak bisa mengubah role-nya sendiri
+  if (parseInt(id, 10) === req.user.userId) {
+     return res.status(403).json({ message: 'Anda tidak dapat mengubah role akun Anda sendiri.' });
+  }
+
+  const query = 'UPDATE users SET role = ? WHERE id = ?';
+  
+  connection.query(query, [newRole, id], (error, results) => {
+    if (error) {
+      console.error('Database query error:', error);
+      return res.status(500).json({ message: 'Gagal mengupdate role.' });
+    }
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
+    }
+    res.status(200).json({ message: 'Role pengguna berhasil diupdate!' });
+  });
+});
+
+// 18gi. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
