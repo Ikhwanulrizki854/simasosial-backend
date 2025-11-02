@@ -381,7 +381,26 @@ app.delete('/api/admin/activities/:id', verifyToken, (req, res) => {
   });
 });
 
-// 16. Menjalankan server
+// 16. BUAT API ENDPOINT UNTUK ADMIN - AMBIL SEMUA PENGGUNA (AMAN)
+app.get('/api/admin/users', verifyToken, (req, res) => {
+  // Cek jika rolenya bukan admin
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak. Hanya untuk admin.' });
+  }
+
+  // Ambil semua data KECUALI password
+  const query = 'SELECT id, nama_lengkap, nim, jurusan, angkatan, no_telepon, email, role FROM users ORDER BY created_at DESC';
+
+  connection.query(query, (error, results) => {
+    if (error) {
+      console.error('Database query error:', error);
+      return res.status(500).json({ message: 'Kesalahan server database.' });
+    }
+    res.status(200).json(results);
+  });
+});
+
+// 17. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
