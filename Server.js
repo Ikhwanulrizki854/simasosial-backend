@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const verifyToken = require('./middleware/verifyToken');
 const multer = require('multer'); 
 const path = require('path'); 
+const fs = require('fs');
 
 // 2. Inisialisasi aplikasi express
 const app = express();
@@ -212,7 +213,7 @@ app.get('/api/activities/:id', (req, res) => {
   });
 });
 
-// 11. BUAT API ENDPOINT UNTUK ADMIN - AMBIL SEMUA KEGIATAN (AMAN)
+// 12. BUAT API ENDPOINT UNTUK ADMIN - AMBIL SEMUA KEGIATAN (AMAN)
 app.get('/api/admin/activities', verifyToken, (req, res) => {
   // Cek jika rolenya bukan admin
   if (req.user.role !== 'admin') {
@@ -230,7 +231,7 @@ app.get('/api/admin/activities', verifyToken, (req, res) => {
   });
 });
 
-// 12. UBAH API ENDPOINT "CREATE ACTIVITY"
+// 13. UBAH API ENDPOINT "CREATE ACTIVITY"
 // Kita ganti 'app.post(...)' menjadi 'upload.single('gambar')'
 // Ini berarti: "Endpoint ini sekarang menerima 1 file dari field bernama 'gambar'"
 app.post('/api/admin/activities', verifyToken, upload.single('gambar'), (req, res) => {
@@ -276,7 +277,7 @@ app.post('/api/admin/activities', verifyToken, upload.single('gambar'), (req, re
   });
 });
 
-// 13. BUAT API ENDPOINT UNTUK ADMIN - UPDATE KEGIATAN (AMAN)
+// 14. BUAT API ENDPOINT UNTUK ADMIN - UPDATE KEGIATAN (AMAN)
 // Kita pakai 'upload.single' lagi untuk menangani gambar baru
 app.put('/api/admin/activities/:id', verifyToken, upload.single('gambar'), (req, res) => {
   if (req.user.role !== 'admin') {
@@ -324,7 +325,63 @@ app.put('/api/admin/activities/:id', verifyToken, upload.single('gambar'), (req,
   });
 });
 
-// 13. Menjalankan server
+// 15. BUAT API ENDPOINT UNTUK ADMIN - DELETE KEGIATAN (AMAN)
+app.delete('/api/admin/activities/:id', verifyToken, (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const { id } = req.params;
+
+  // SEBELUM MENGHAPUS KEGIATAN, kita harus menghapus data terkait
+  // 1. Hapus pendaftaran (registrations) terkait
+  connection.query('DELETE FROM activity_registrations WHERE activity_id = ?', [id], (errReg) => {
+    if (errReg) {
+      console.error('Error deleting registrations:', errReg);
+      return res.status(500).json({ message: 'Gagal menghapus data terkait.' });
+    }
+
+    // 2. Hapus donasi (donations) terkait
+    connection.query('DELETE FROM donations WHERE activity_id = ?', [id], (errDon) => {
+      if (errDon) {
+        console.error('Error deleting donations:', errDon);
+        return res.status(500).json({ message: 'Gagal menghapus data terkait.' });
+      }
+
+      // 3. Ambil nama file gambar sebelum menghapus kegiatan
+      connection.query('SELECT gambar_url FROM activities WHERE id = ?', [id], (errSel, results) => {
+        if (errSel || results.length === 0) {
+          return res.status(404).json({ message: 'Kegiatan tidak ditemukan.' });
+        }
+        
+        const gambarUrl = results[0].gambar_url;
+
+        // 4. Baru hapus kegiatan utamanya
+        connection.query('DELETE FROM activities WHERE id = ?', [id], (errAct, resultAct) => {
+          if (errAct) {
+            console.error('Error deleting activity:', errAct);
+            return res.status(500).json({ message: 'Gagal menghapus kegiatan.' });
+          }
+
+          // 5. Jika kegiatan berhasil dihapus DAN ada gambar, hapus file gambarnya
+          if (gambarUrl) {
+            fs.unlink(gambarUrl, (errFile) => {
+              if (errFile) {
+                console.error('Gagal menghapus file gambar:', errFile);
+                // Jangan kirim error, lanjutkan saja. DB sudah bersih.
+              }
+              console.log('File gambar berhasil dihapus:', gambarUrl);
+            });
+          }
+          
+          res.status(200).json({ message: 'Kegiatan berhasil dihapus!' });
+        });
+      });
+    });
+  });
+});
+
+// 16. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
