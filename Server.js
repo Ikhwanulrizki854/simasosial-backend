@@ -598,7 +598,40 @@ app.put('/api/admin/participants/:registration_id/status', verifyToken, (req, re
   });
 });
 
-// 23. Menjalankan server
+// 23. API UNTUK VERIFIKASI PUBLIK (TIDAK PERLU LOGIN)
+app.get('/api/verify-certificate/:kodeUnik', (req, res) => {
+  const { kodeUnik } = req.params;
+
+  // Query JOIN 3 tabel: certificates, users, dan activities
+  const query = `
+    SELECT 
+      cert.kode_unik,
+      cert.tanggal_terbit,
+      usr.nama_lengkap,
+      act.judul AS nama_kegiatan
+    FROM certificates AS cert
+    JOIN users AS usr ON cert.user_id = usr.id
+    JOIN activities AS act ON cert.activity_id = act.id
+    WHERE cert.kode_unik = ?
+  `;
+
+  connection.query(query, [kodeUnik], (error, results) => {
+    if (error) {
+      console.error('Database query error:', error);
+      return res.status(500).json({ message: 'Kesalahan server database.' });
+    }
+
+    // Cek jika sertifikat tidak ditemukan
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Sertifikat tidak valid atau tidak ditemukan.' });
+    }
+
+    // Kirim data sertifikat yang valid
+    res.status(200).json(results[0]);
+  });
+});
+
+// 24. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
