@@ -8,6 +8,7 @@ const verifyToken = require('./middleware/verifyToken');
 const multer = require('multer'); 
 const path = require('path'); 
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 // 2. Inisialisasi aplikasi express
 const app = express();
@@ -491,7 +492,56 @@ app.put('/api/admin/profile', verifyToken, async (req, res) => {
   }
 });
 
-// 20. Menjalankan server
+// 20. API UNTUK ADMIN - TERBITKAN SERTIFIKAT UNTUK KEGIATAN
+app.post('/api/admin/activities/:id/generate-certificates', verifyToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Akses ditolak.' });
+  }
+
+  const { id: activityId } = req.params;
+
+  // Langkah 1: Ambil semua pengguna yang HADIR di kegiatan ini
+  // DAN yang belum punya sertifikat untuk kegiatan ini
+  const findHadirQuery = `
+    SELECT reg.user_id
+    FROM activity_registrations AS reg
+    LEFT JOIN certificates AS cert ON reg.user_id = cert.user_id AND reg.activity_id = cert.activity_id
+    WHERE reg.activity_id = ? 
+      AND reg.status_kehadiran = 'hadir'
+      AND cert.id IS NULL
+  `;
+
+  connection.query(findHadirQuery, [activityId], (err, usersToCertify) => {
+    if (err) {
+      console.error('Error finding users:', err);
+      return res.status(500).json({ message: 'Error database saat mencari peserta.' });
+    }
+
+    if (usersToCertify.length === 0) {
+      return res.status(404).json({ message: 'Tidak ada peserta hadir yang memenuhi syarat untuk diterbitkan sertifikat.' });
+    }
+
+    // Langkah 2: Siapkan data untuk dimasukkan ke tabel 'certificates'
+    const valuesToInsert = usersToCertify.map(user => {
+      const kodeUnik = uuidv4(); // Buat kode unik (contoh: 8f8e5-...)
+      return [user.user_id, activityId, kodeUnik];
+    });
+
+    // Langkah 3: Masukkan semua sertifikat baru ke database
+    const insertQuery = 'INSERT INTO certificates (user_id, activity_id, kode_unik) VALUES ?';
+    
+    connection.query(insertQuery, [valuesToInsert], (errInsert, results) => {
+      if (errInsert) {
+        console.error('Error inserting certificates:', errInsert);
+        return res.status(500).json({ message: 'Gagal menerbitkan sertifikat.' });
+      }
+
+      res.status(201).json({ message: `Berhasil diterbitkan! ${results.affectedRows} sertifikat baru telah dibuat.` });
+    });
+  });
+});
+
+// 21. Menjalankan server
 app.listen(port, () => {
   console.log(`Server backend berjalan di http://localhost:${port}`);
 });
