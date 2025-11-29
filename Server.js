@@ -1,11 +1,11 @@
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer'); 
 const path = require('path'); 
 const fs = require('fs');
+const mysql = require('mysql2');
 const { v4: uuidv4 } = require('uuid');
 const midtransClient = require('midtrans-client');
 const crypto = require('crypto');
@@ -28,12 +28,34 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(cors()); 
 app.use(express.json()); 
 
-// Database Connection
+// Hubungkan ke Database MySQL (CLOUD TiDB)
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '', 
-  database: 'simasosial_db' 
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 4000,
+    // Ubah baris ssl menjadi seperti ini:
+    ssl: {
+        rejectUnauthorized: false 
+    }
+});
+
+// --- RUTE TEST KONEKSI DATABASE ---
+app.get('/test-users', (req, res) => {
+    const query = "SELECT * FROM users";
+    
+    connection.query(query, (err, results) => {
+        if (err) {
+            console.error("Gagal ambil data:", err);
+            return res.status(500).json({ error: "Gagal mengambil data dari database" });
+        }
+        res.json({
+            status: "Sukses",
+            message: "Koneksi ke TiDB Cloud Berhasil!",
+            data: results
+        });
+    });
 });
 
 // KONFIGURASI NODEMAILER
