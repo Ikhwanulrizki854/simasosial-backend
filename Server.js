@@ -13,6 +13,8 @@ const { Parser } = require('json2csv');
 const verifyToken = require('./middleware/verifyToken');
 const nodemailer = require('nodemailer');
 const ExcelJS = require('exceljs');
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 
 require('dotenv').config();
 
@@ -60,12 +62,14 @@ app.get('/test-users', (req, res) => {
 
 // KONFIGURASI NODEMAILER
 const transporter = nodemailer.createTransport({
-  service: 'gmail', 
+  host: 'smtp.gmail.com', 
+  port: 465,               
+  secure: true,            
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  family: 4
+  family: 4 
 });
 
 // Fungsi Helper untuk Kirim Email
