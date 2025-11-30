@@ -15,8 +15,6 @@ const nodemailer = require('nodemailer');
 const ExcelJS = require('exceljs');
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
 
 require('dotenv').config();
 
