@@ -1,3 +1,5 @@
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -13,8 +15,6 @@ const { Parser } = require('json2csv');
 const verifyToken = require('./middleware/verifyToken');
 const nodemailer = require('nodemailer');
 const ExcelJS = require('exceljs');
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
 
 require('dotenv').config();
 
@@ -60,18 +60,21 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// KONFIGURASI NODEMAILER 
+// KONFIGURASI FINAL: Port 587 + IPv4 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com', 
-  port: 465,              
-  secure: true,           
+  host: 'smtp.gmail.com',
+  port: 587,             
+  secure: false,         
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false 
+  },
+  // Tambahan timeout supaya tidak cepat putus asa
+  connectionTimeout: 10000, 
+  greetingTimeout: 10000 
 });
 
 // Fungsi Helper untuk Kirim Email
