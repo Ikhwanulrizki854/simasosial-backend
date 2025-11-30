@@ -60,24 +60,18 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// KONFIGURASI ANTI-TIMEOUT
+// KONFIGURASI BREVO (SOLUSI ANTI-BLOKIR)
 const transporter = nodemailer.createTransport({
-  host: 'smtp.googlemail.com', 
-  port: 465,                   
-  secure: true,               
+  host: 'smtp-relay.brevo.com', // Server Brevo
+  port: 587,                    // Port standar 
+  secure: false,                // False untuk port 587
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
     rejectUnauthorized: false
-  },
- 
-  logger: true,            // Log detail di terminal
-  debug: true,             // Debug mode nyala
-  connectionTimeout: 60000, // Tunggu koneksi sampai 60 detik (1 menit)
-  greetingTimeout: 30000,   // Tunggu sapaan server 30 detik
-  socketTimeout: 60000      // Tunggu data socket 60 detik
+  }
 });
 
 // Fungsi Helper untuk Kirim Email
