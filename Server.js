@@ -15,6 +15,8 @@ const nodemailer = require('nodemailer');
 const ExcelJS = require('exceljs');
 const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
 
 require('dotenv').config();
 
@@ -60,16 +62,18 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// KONFIGURASI NODEMAILER
+// KONFIGURASI NODEMAILER 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com', 
-  port: 465,               
-  secure: true,            
+  port: 465,              
+  secure: true,           
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  family: 4 
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 // Fungsi Helper untuk Kirim Email
