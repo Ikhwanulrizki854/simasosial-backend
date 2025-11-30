@@ -60,11 +60,11 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// PORT ALTERNATIF BREVO (2525)
+// --- KONFIGURASI TRANSPORTER (UPDATED) ---
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com', 
-  port: 587,             
-  secure: false,          
+  host: 'smtp-relay.brevo.com',
+  port: 587,               // Kita coba port 587 lagi karena auth sudah benar
+  secure: false,           // False untuk 587
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -72,15 +72,15 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false
   },
-  
-  debug: true,
+  debug: true, // Biarkan nyala biar kelihatan lognya
   logger: true
 });
 
-// Fungsi Helper untuk Kirim Email
+// --- FUNGSI KIRIM EMAIL (HARDCODE PENGIRIM) ---
 const sendEmail = (to, subject, htmlContent) => {
   const mailOptions = {
-    from: `"SIMASOSIAL FST" <${process.env.EMAIL_USER}>`,
+    // PENTING: Tulis emailmu secara manual di sini, JANGAN pakai process.env dulu
+    from: '"Admin SimaSosial" <ikhwanulrizki765@gmail.com>', 
     to: to,
     subject: subject,
     html: htmlContent
@@ -88,9 +88,9 @@ const sendEmail = (to, subject, htmlContent) => {
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log('Gagal kirim email:', error);
+      console.log('❌ Gagal kirim email:', error);
     } else {
-      console.log('Email terkirim: ' + info.response);
+      console.log('✅ Email terkirim: ' + info.response);
     }
   });
 };
