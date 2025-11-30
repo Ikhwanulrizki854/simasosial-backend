@@ -60,11 +60,11 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// --- KONFIGURASI TRANSPORTER (UPDATED) ---
+// SOLUSI PORT 2525 
 const transporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
-  port: 587,               // Kita coba port 587 lagi karena auth sudah benar
-  secure: false,           // False untuk 587
+  port: 2525,               // <--- WAJIB 2525 (JANGAN 587 ATAU 465)
+  secure: false,            // False untuk port 2525
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -72,14 +72,14 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false
   },
-  debug: true, // Biarkan nyala biar kelihatan lognya
+  debug: true,
   logger: true
 });
 
 // --- FUNGSI KIRIM EMAIL (HARDCODE PENGIRIM) ---
 const sendEmail = (to, subject, htmlContent) => {
   const mailOptions = {
-    // PENTING: Tulis emailmu secara manual di sini, JANGAN pakai process.env dulu
+    // PENTING: Tulis email secara manual di sini, JANGAN pakai process.env dulu
     from: '"Admin SimaSosial" <ikhwanulrizki765@gmail.com>', 
     to: to,
     subject: subject,
