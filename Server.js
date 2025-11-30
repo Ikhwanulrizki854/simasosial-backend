@@ -60,18 +60,21 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// KONFIGURASI BREVO (SOLUSI ANTI-BLOKIR)
+// PORT ALTERNATIF BREVO (2525)
 const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com', // Server Brevo
-  port: 587,                    // Port standar 
-  secure: false,                // False untuk port 587
+  host: 'smtp-relay.brevo.com', 
+  port: 2525,             
+  secure: false,          
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  
+  debug: true,
+  logger: true
 });
 
 // Fungsi Helper untuk Kirim Email
