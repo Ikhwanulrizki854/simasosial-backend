@@ -60,21 +60,24 @@ app.get('/test-users', (req, res) => {
     });
 });
 
-// KONFIGURASI FINAL: Port 587 + IPv4 
+// KONFIGURASI ANTI-TIMEOUT
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,             
-  secure: false,         
+  host: 'smtp.googlemail.com', 
+  port: 465,                   
+  secure: true,               
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
-    rejectUnauthorized: false 
+    rejectUnauthorized: false
   },
-  // Tambahan timeout supaya tidak cepat putus asa
-  connectionTimeout: 10000, 
-  greetingTimeout: 10000 
+ 
+  logger: true,            // Log detail di terminal
+  debug: true,             // Debug mode nyala
+  connectionTimeout: 60000, // Tunggu koneksi sampai 60 detik (1 menit)
+  greetingTimeout: 30000,   // Tunggu sapaan server 30 detik
+  socketTimeout: 60000      // Tunggu data socket 60 detik
 });
 
 // Fungsi Helper untuk Kirim Email
