@@ -60,12 +60,12 @@ app.get('/test-users', (req, res) => {
 
 // KONFIGURASI NODEMAILER
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
+  host: 'smtp.gmail.com', 
+  port: 465,              
+  secure: true,           
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
-});
+  });
 
 // Fungsi Helper untuk Kirim Email
 const sendEmail = (to, subject, htmlContent) => {
